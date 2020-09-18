@@ -1,8 +1,8 @@
 <?php
 //Set error to show
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
+// ini_set('display_errors', 1);
+// ini_set('display_startup_errors', 1);
+// error_reporting(E_ALL);
 
 date_default_timezone_set("Asia/Jakarta"); // Set default time zone
 
@@ -24,55 +24,38 @@ function getBaseUrl()
 if(isset($_POST['dir'])){
 
     $path = 'uploads';
+    $scope = $_POST['scope'];
     $directories = $_POST['dir'];
 
     //create folder if exists
-    if(!file_exists($path . '/' . $directories)){
+    if(!file_exists($path . '/' . $scope . '/' . $directories)){
         $oldmask = umask(0);
-        mkdir($path . '/' . $directories, 0777, true);
+        mkdir($path . '/' . $scope . '/' . $directories, 0777, true);
         umask($oldmask);
     }
 
     $date = date('y-m-d H:i:s');
     $filename = '[' . $date . ']' . $_POST['file_name'];
     $ext = pathinfo($_FILES['file']['name'], PATHINFO_EXTENSION);
-    $uploadFile = $path . '/' . $directories . '/' . $filename . '.' . $ext;
+    $uploadFile = $path . '/' . $scope . '/' . $directories . '/' . $filename . '.' . $ext;
 
-    try {
-
-        //move_uploaded_file($_FILES['file']['tmp_name'], $uploadFile);
-        if(!move_uploaded_file($_FILES['file']['tmp_name'], $uploadFile)){
-            throw new Exception('File tidak dapat diunggah');
-        } else {
-            chmod($uploadFile, 0777);
-            $url = getBaseUrl() . $uploadFile;
-            $out = [
-                'message' => 'Upload success',
-                'file_name' => $filename . '.' . $ext,
-                'url' => $url
-            ];
-        }
-
-    } catch (Exception $e) {
+     //move_uploaded_file($_FILES['file']['tmp_name'], $uploadFile);
+    if(!move_uploaded_file($_FILES['file']['tmp_name'], $uploadFile)){
         $out = [
-            'message' => 'Upload failed ' . $e->getMessage
+            'message' => 'Upload failed '
+        ];
+    } else {
+        chmod($uploadFile, 0777);
+        $url = getBaseUrl() . $uploadFile;
+        $out = [
+            'message' => 'Upload success',
+            'file_name' => $filename . '.' . $ext,
+            'url' => $url
         ];
     }
 
     header('Content-Type: application/json');
     echo json_encode($out);
 
-
-    // Looping all files & do upload
-
-    // $jumlah = count($_FILES['file']['name']);
-    // for($i=0; $i<$jumlah; $i++){
-    //     $filename = $_FILES['file']['name'][$i];
-    //     $uploadFile = $path . '/' . $directories . '/' . $filename;
-    //     $upload = move_uploaded_file($_FILES['file']['tmp_name'][$i], $uploadFile);
-    //     chmod($uploadFile, 0777);
-    // }
-
-   
 
 }

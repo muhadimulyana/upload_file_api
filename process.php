@@ -48,6 +48,7 @@ if(isset($_POST['dir'])){
             $url = getBaseUrl() . $uploadFile;
             $out = [
                 'message' => 'Upload success',
+                'file_name' => $filename . '.' . $ext,
                 'url' => $url
             ];
         }

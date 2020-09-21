@@ -35,48 +35,55 @@ parameter delete
 
 $basepath = 'uploads';
 
-function uploadFile($scope, $dir, $fileName, $uFile){
+function uploadFile($scope, $dir, $fileName){
 
-    global $basepath;
-    //create folder if exists
-    if(!file_exists($basepath . '/' . $scope . '/' . $dir)){
-        $oldmask = umask(0);
-        mkdir($basepath . '/' . $scope . '/' . $dir, 0777, true);
-        umask($oldmask);
-    }
-
-    $ext = pathinfo($uFile['name'], PATHINFO_EXTENSION);
-    $fileName = $fileName == '' ? $uFile['name'] : $fileName . '.' . $ext; 
-    $uploadFile = $basepath . '/' . $scope . '/' . $dir . '/' . $fileName;
-
-    if(file_exists($uploadFile)){
-        $cnt = 1; //iteration of file
-        $x_file = pathinfo($uploadFile);
-        $x_dirname = $x_file['dirname'];
-        $x_filename = $x_file['filename'];
-        $x_ext = $x_file['extension'];
-
-        $fileName = $x_filename . '(' . $cnt . ')' . '.' . $x_ext;
-        while(file_exists($x_dirname . '/' . $x_filename . '(' . $cnt . ')' . '.' . $x_ext)){
-            $cnt = $cnt + 1;
-            $fileName = $x_filename . '(' . $cnt . ')' . '.' . $x_ext;
+    if($_FILES['file']){
+        $uFile = $_FILES['file'];
+        global $basepath;
+        //create folder if exists
+        if(!file_exists($basepath . '/' . $scope . '/' . $dir)){
+            $oldmask = umask(0);
+            mkdir($basepath . '/' . $scope . '/' . $dir, 0777, true);
+            umask($oldmask);
         }
-
-        $uploadFile = $basepath . '/' . $scope . '/' . $dir . '/' .  $fileName;
-    }
-
-     //move_uploaded_file($_FILES['file']['tmp_name'], $uploadFile);
-    if(!move_uploaded_file($uFile['tmp_name'], $uploadFile)){
-        $out = [
-            'message' => 'Gagal ' . $uFile['error']
-        ];
+    
+        $ext = pathinfo($uFile['name'], PATHINFO_EXTENSION);
+        $fileName = $fileName == '' ? $uFile['name'] : $fileName . '.' . $ext; 
+        $uploadFile = $basepath . '/' . $scope . '/' . $dir . '/' . $fileName;
+    
+        if(file_exists($uploadFile)){
+            $cnt = 1; //iteration of file
+            $x_file = pathinfo($uploadFile);
+            $x_dirname = $x_file['dirname'];
+            $x_filename = $x_file['filename'];
+            $x_ext = $x_file['extension'];
+    
+            $fileName = $x_filename . '(' . $cnt . ')' . '.' . $x_ext;
+            while(file_exists($x_dirname . '/' . $x_filename . '(' . $cnt . ')' . '.' . $x_ext)){
+                $cnt = $cnt + 1;
+                $fileName = $x_filename . '(' . $cnt . ')' . '.' . $x_ext;
+            }
+    
+            $uploadFile = $basepath . '/' . $scope . '/' . $dir . '/' .  $fileName;
+        }
+    
+         //move_uploaded_file($_FILES['file']['tmp_name'], $uploadFile);
+        if(!move_uploaded_file($uFile['tmp_name'], $uploadFile)){
+            $out = [
+                'message' => 'Gagal ' . $uFile['error']
+            ];
+        } else {
+            chmod($uploadFile, 0777);
+            getBaseUrl() . $uploadFile;
+            $out = [
+                'message' => 'Ok',
+                'file_name' => $fileName,
+                'url' => getBaseUrl() . $uploadFile
+            ];
+        }
     } else {
-        chmod($uploadFile, 0777);
-        getBaseUrl() . $uploadFile;
         $out = [
-            'message' => 'Ok',
-            'file_name' => $fileName,
-            'url' => getBaseUrl() . $uploadFile
+            'message' => 'Tidak ada file yang dipilih'
         ];
     }
 
@@ -84,8 +91,26 @@ function uploadFile($scope, $dir, $fileName, $uFile){
 
 }
 
-function downloadFile() {
-    
+function downloadFile($dir, $fileName) {
+
+    global $basepath;
+
+    if (!file_exists($basepath."/". $dir . '/' . $fileName)){
+
+		$out = array(
+            "status" => "error",
+            "message" => "File tidak ditemukan",
+            "file" => $basepath."/".$fileName
+        );	
+        
+        return $out;
+
+	} else {
+		header("Content-Type: application/octet-stream");
+		header('Accept-Ranges: bytes');
+		header("Content-length: ".filesize($basepath."/".$fileName));
+        readfile($basepath."/".$fileName);	
+    }
 }
 
 function getBaseUrl() 
